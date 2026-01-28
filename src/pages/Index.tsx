@@ -49,6 +49,10 @@ const translations: Record<string, Record<string, string>> = {
   analyzing: { en: "Analyzing...", ml: "വിശകലനം ചെയ്യുന്നു..." },
   diagnosisResult: { en: "Diagnosis Result", ml: "നിർണയ ഫലം" },
   problemType: { en: "Problem Type", ml: "പ്രശ്ന തരം" },
+  riskLevel: { en: "Risk Level", ml: "അപകട നില" },
+  high: { en: "High", ml: "ഉയർന്നത്" },
+  medium: { en: "Medium", ml: "മിതമായ" },
+  low: { en: "Low", ml: "കുറവ്" },
   possibleCause: { en: "Possible Cause", ml: "സാധ്യമായ കാരണം" },
   recommendedAction: { en: "Recommended Action", ml: "ശുപാർശ ചെയ്യുന്ന നടപടി" },
   preventiveMeasures: { en: "Preventive Measures", ml: "മുൻകരുതൽ നടപടികൾ" },
@@ -63,6 +67,7 @@ const t = (key: string, lang: string): string => {
 
 interface DiagnosisResult {
   problemType: string;
+  riskLevel: "High" | "Medium" | "Low";
   possibleCause: string;
   recommendedAction: string;
   preventiveMeasures: string;
@@ -336,6 +341,23 @@ const Index = () => {
                 <p className="diagnosis-content font-semibold text-primary">
                   {diagnosis.problemType}
                 </p>
+              </div>
+
+              <div className="diagnosis-section">
+                <p className="diagnosis-title">{t("riskLevel", language)}</p>
+                <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${
+                  diagnosis.riskLevel === "High" 
+                    ? "bg-red-500 text-white" 
+                    : diagnosis.riskLevel === "Medium"
+                    ? "bg-yellow-500 text-white"
+                    : "bg-green-500 text-white"
+                }`}>
+                  {diagnosis.riskLevel === "High" 
+                    ? t("high", language) 
+                    : diagnosis.riskLevel === "Medium"
+                    ? t("medium", language)
+                    : t("low", language)}
+                </span>
               </div>
 
               <div className="diagnosis-section">
