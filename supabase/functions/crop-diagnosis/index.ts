@@ -33,6 +33,7 @@ When analyzing crop issues, consider Kerala's tropical climate and common crops 
 IMPORTANT: You MUST respond with ONLY valid JSON in this exact format (no markdown, no code blocks, just pure JSON):
 {
   "problemType": "Identify if it's Pest Attack, Plant Disease, or Nutrient Deficiency",
+  "riskLevel": "Assess severity as High, Medium, or Low based on crop damage potential and urgency",
   "possibleCause": "Explain the likely cause in 2-3 simple sentences",
   "recommendedAction": "Provide 3-4 specific, practical remedies suitable for small farmers",
   "preventiveMeasures": "List 3-4 preventive steps to avoid this issue in future"
