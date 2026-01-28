@@ -1,11 +1,33 @@
 import { useState, useRef } from "react";
-import { Camera, Upload, Leaf, Languages, Send, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { Camera, Upload, Leaf, Languages, Send, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Kerala Districts
 const KERALA_DISTRICTS = [
   "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
   "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
   "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
+];
+
+// Crop Categories
+const CROP_CATEGORIES = [
+  { en: "Coconut", ml: "തെങ്ങ്" },
+  { en: "Rubber", ml: "റബ്ബർ" },
+  { en: "Banana", ml: "വാഴ" },
+  { en: "Rice/Paddy", ml: "നെല്ല്" },
+  { en: "Pepper", ml: "കുരുമുളക്" },
+  { en: "Cardamom", ml: "ഏലം" },
+  { en: "Vegetables", ml: "പച്ചക്കറികൾ" },
+  { en: "Arecanut", ml: "അടയ്ക്ക" },
+  { en: "Cashew", ml: "കശുമാവ്" },
+  { en: "Coffee", ml: "കാപ്പി" },
+  { en: "Tea", ml: "ചായ" },
+  { en: "Ginger", ml: "ഇഞ്ചി" },
+  { en: "Turmeric", ml: "മഞ്ഞൾ" },
+  { en: "Tapioca", ml: "കപ്പ" },
+  { en: "Mango", ml: "മാവ്" },
+  { en: "Jackfruit", ml: "പ്ലാവ്" },
+  { en: "Other", ml: "മറ്റുള്ളവ" },
 ];
 
 // Translation mappings
@@ -21,6 +43,8 @@ const translations: Record<string, Record<string, string>> = {
   descriptionPlaceholder: { en: "E.g., Yellow spots on leaves, wilting plants, pest attack...", ml: "ഉദാ: ഇലകളിൽ മഞ്ഞ പാടുകൾ, ചെടികൾ വാടുന്നു, കീടാക്രമണം..." },
   selectDistrict: { en: "Select Your District", ml: "നിങ്ങളുടെ ജില്ല തിരഞ്ഞെടുക്കുക" },
   chooseDistrict: { en: "-- Choose District --", ml: "-- ജില്ല തിരഞ്ഞെടുക്കുക --" },
+  selectCropCategory: { en: "Select Crop Category", ml: "വിള വിഭാഗം തിരഞ്ഞെടുക്കുക" },
+  chooseCropCategory: { en: "-- Choose Crop --", ml: "-- വിള തിരഞ്ഞെടുക്കുക --" },
   getDiagnosis: { en: "Get AI Diagnosis", ml: "AI നിർണയം നേടുക" },
   analyzing: { en: "Analyzing...", ml: "വിശകലനം ചെയ്യുന്നു..." },
   diagnosisResult: { en: "Diagnosis Result", ml: "നിർണയ ഫലം" },
@@ -28,15 +52,9 @@ const translations: Record<string, Record<string, string>> = {
   possibleCause: { en: "Possible Cause", ml: "സാധ്യമായ കാരണം" },
   recommendedAction: { en: "Recommended Action", ml: "ശുപാർശ ചെയ്യുന്ന നടപടി" },
   preventiveMeasures: { en: "Preventive Measures", ml: "മുൻകരുതൽ നടപടികൾ" },
-  pestAttack: { en: "Pest Attack", ml: "കീടാക്രമണം" },
-  plantDisease: { en: "Plant Disease", ml: "സസ്യരോഗം" },
-  nutrientDeficiency: { en: "Nutrient Deficiency", ml: "പോഷകക്കുറവ്" },
   errorOccurred: { en: "An error occurred. Please try again.", ml: "ഒരു പിശക് സംഭവിച്ചു. വീണ്ടും ശ്രമിക്കുക." },
-  apiKeyMissing: { en: "Please enter your Gemini API key", ml: "നിങ്ങളുടെ Gemini API കീ നൽകുക" },
-  apiKeyLabel: { en: "Gemini API Key", ml: "Gemini API കീ" },
-  apiKeyPlaceholder: { en: "Enter your API key here...", ml: "നിങ്ങളുടെ API കീ ഇവിടെ നൽകുക..." },
-  apiKeyNote: { en: "Get your free API key from Google AI Studio", ml: "Google AI Studio-ൽ നിന്ന് സൗജന്യ API കീ നേടുക" },
   yourCropImage: { en: "Your Crop Image", ml: "നിങ്ങളുടെ വിള ചിത്രം" },
+  provideImageOrDescription: { en: "Please provide an image or description", ml: "ദയവായി ഒരു ചിത്രമോ വിവരണമോ നൽകുക" },
 };
 
 const t = (key: string, lang: string): string => {
@@ -55,7 +73,7 @@ const Index = () => {
   const [image, setImage] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [district, setDistrict] = useState("");
-  const [apiKey, setApiKey] = useState("");
+  const [cropCategory, setCropCategory] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,14 +96,9 @@ const Index = () => {
     setLanguage(prev => prev === "en" ? "ml" : "en");
   };
 
-  const analyzeWithGemini = async () => {
-    if (!apiKey) {
-      setError(t("apiKeyMissing", language));
-      return;
-    }
-
+  const analyzeWithAI = async () => {
     if (!image && !description) {
-      setError(language === "en" ? "Please provide an image or description" : "ദയവായി ഒരു ചിത്രമോ വിവരണമോ നൽകുക");
+      setError(t("provideImageOrDescription", language));
       return;
     }
 
@@ -93,80 +106,38 @@ const Index = () => {
     setError(null);
     setDiagnosis(null);
 
-    const languageInstruction = language === "ml" 
-      ? "Respond ONLY in Malayalam language. All text must be in Malayalam script."
-      : "Respond in simple English.";
-
-    const prompt = `You are an experienced agricultural expert specializing in Kerala's crops and farming conditions. 
-    
-Analyze the following crop issue:
-- Farmer's Description: ${description || "No description provided"}
-- District: ${district || "Not specified"} (Kerala, India)
-
-${languageInstruction}
-
-Provide a diagnosis in this EXACT JSON format (no markdown, just pure JSON):
-{
-  "problemType": "Identify if it's Pest Attack, Plant Disease, or Nutrient Deficiency",
-  "possibleCause": "Explain the likely cause in 2-3 simple sentences",
-  "recommendedAction": "Provide 3-4 specific, practical remedies suitable for small farmers",
-  "preventiveMeasures": "List 3-4 preventive steps to avoid this issue in future"
-}
-
-Keep language simple and farmer-friendly. Consider Kerala's tropical climate and common crops like coconut, rubber, banana, rice, pepper, cardamom.`;
-
     try {
-      const requestBody: { contents: Array<{ parts: Array<{ text?: string; inline_data?: { mime_type: string; data: string } }> }> } = {
-        contents: [{
-          parts: []
-        }]
-      };
+      let imageBase64 = null;
+      let imageMimeType = null;
 
       if (image) {
-        const base64Data = image.split(",")[1];
-        const mimeType = image.split(";")[0].split(":")[1];
-        requestBody.contents[0].parts.push({
-          inline_data: {
-            mime_type: mimeType,
-            data: base64Data
-          }
-        });
+        const parts = image.split(",");
+        imageBase64 = parts[1];
+        imageMimeType = parts[0].split(";")[0].split(":")[1];
       }
 
-      requestBody.contents[0].parts.push({ text: prompt });
+      const { data, error: fnError } = await supabase.functions.invoke("crop-diagnosis", {
+        body: {
+          description,
+          district,
+          cropCategory,
+          language,
+          imageBase64,
+          imageMimeType,
+        },
+      });
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+      if (fnError) {
+        throw new Error(fnError.message);
       }
 
-      const data = await response.json();
-      const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (textResponse) {
-        // Clean the response - remove markdown code blocks if present
-        let cleanedResponse = textResponse
-          .replace(/```json\n?/g, "")
-          .replace(/```\n?/g, "")
-          .trim();
-        
-        const parsed = JSON.parse(cleanedResponse);
-        setDiagnosis(parsed);
-      } else {
-        throw new Error("No response from AI");
+      if (data.error) {
+        throw new Error(data.error);
       }
+
+      setDiagnosis(data.diagnosis);
     } catch (err) {
-      console.error("Gemini API Error:", err);
+      console.error("Analysis Error:", err);
       setError(t("errorOccurred", language));
     } finally {
       setIsLoading(false);
@@ -207,32 +178,6 @@ Keep language simple and farmer-friendly. Consider Kerala's tropical climate and
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto p-4 pb-8 space-y-6">
-        {/* API Key Input */}
-        <div className="farmer-card">
-          <label className="farmer-label flex items-center gap-2">
-            <Info className="w-5 h-5 text-primary" />
-            {t("apiKeyLabel", language)}
-          </label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder={t("apiKeyPlaceholder", language)}
-            className="farmer-input"
-          />
-          <p className="text-sm text-muted-foreground mt-2">
-            {t("apiKeyNote", language)} →{" "}
-            <a 
-              href="https://aistudio.google.com/app/apikey" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary underline hover:no-underline"
-            >
-              aistudio.google.com
-            </a>
-          </p>
-        </div>
-
         {/* Image Upload Section */}
         <div className="farmer-card">
           <label className="farmer-label">{t("uploadImage", language)}</label>
@@ -307,6 +252,23 @@ Keep language simple and farmer-friendly. Consider Kerala's tropical climate and
           />
         </div>
 
+        {/* Crop Category Selection */}
+        <div className="farmer-card">
+          <label className="farmer-label">{t("selectCropCategory", language)}</label>
+          <select
+            value={cropCategory}
+            onChange={(e) => setCropCategory(e.target.value)}
+            className="farmer-select"
+          >
+            <option value="">{t("chooseCropCategory", language)}</option>
+            {CROP_CATEGORIES.map((crop) => (
+              <option key={crop.en} value={crop.en}>
+                {language === "en" ? crop.en : `${crop.ml} (${crop.en})`}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* District Selection */}
         <div className="farmer-card">
           <label className="farmer-label">{t("selectDistrict", language)}</label>
@@ -332,13 +294,13 @@ Keep language simple and farmer-friendly. Consider Kerala's tropical climate and
 
         {/* Submit Button */}
         <button
-          onClick={analyzeWithGemini}
+          onClick={analyzeWithAI}
           disabled={isLoading || (!image && !description)}
           className="farmer-btn w-full flex items-center justify-center gap-3"
         >
           {isLoading ? (
             <>
-              <div className="loading-spinner" />
+              <Loader2 className="w-6 h-6 animate-spin" />
               {t("analyzing", language)}
             </>
           ) : (
@@ -403,8 +365,8 @@ Keep language simple and farmer-friendly. Consider Kerala's tropical climate and
       <footer className="bg-secondary py-4 px-4 text-center">
         <p className="text-muted-foreground text-sm">
           {language === "en" 
-            ? "Powered by Google Gemini AI • For Kerala Farmers" 
-            : "Google Gemini AI പവർഡ് • കേരള കർഷകർക്കായി"}
+            ? "Powered by Lovable AI • For Kerala Farmers" 
+            : "Lovable AI പവർഡ് • കേരള കർഷകർക്കായി"}
         </p>
       </footer>
     </div>
