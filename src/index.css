@@ -2,95 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 20%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 122 39% 94%;
+    --card-foreground: 0 0% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 123 38% 33%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 122 39% 89%;
+    --secondary-foreground: 123 38% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 120 20% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 122 50% 45%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 120 20% 85%;
+    --input: 120 20% 85%;
+    --ring: 123 38% 33%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom agricultural colors */
+    --leaf-green: 123 38% 33%;
+    --leaf-light: 122 39% 94%;
+    --earth-brown: 30 30% 35%;
+    --sky-blue: 200 70% 50%;
+    --warning-orange: 30 90% 55%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 0 0% 10%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 123 50% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 123 30% 20%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 123 50% 40%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 123 50% 45%;
   }
 }
 
@@ -101,5 +83,70 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', 'Noto Sans Malayalam', sans-serif;
+  }
+
+  /* Malayalam text support */
+  .malayalam-text {
+    font-family: 'Noto Sans Malayalam', sans-serif;
+  }
+}
+
+@layer components {
+  .farmer-card {
+    @apply bg-card rounded-xl p-6 shadow-md border border-border;
+  }
+
+  .farmer-btn {
+    @apply bg-primary text-primary-foreground font-semibold py-4 px-6 rounded-lg text-lg 
+           hover:opacity-90 active:scale-[0.98] transition-all duration-200 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .farmer-btn-outline {
+    @apply border-2 border-primary text-primary bg-transparent font-semibold py-3 px-5 rounded-lg
+           hover:bg-primary hover:text-primary-foreground transition-all duration-200;
+  }
+
+  .farmer-input {
+    @apply w-full p-4 text-lg border-2 border-border rounded-lg bg-background
+           focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none
+           transition-all duration-200;
+  }
+
+  .farmer-select {
+    @apply w-full p-4 text-lg border-2 border-border rounded-lg bg-background
+           focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none
+           transition-all duration-200 cursor-pointer;
+  }
+
+  .farmer-label {
+    @apply block text-lg font-semibold text-foreground mb-2;
+  }
+
+  .diagnosis-card {
+    @apply bg-card rounded-xl p-6 border-l-4 border-primary shadow-lg;
+  }
+
+  .diagnosis-section {
+    @apply mb-4 pb-4 border-b border-border last:border-0 last:mb-0 last:pb-0;
+  }
+
+  .diagnosis-title {
+    @apply text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1;
+  }
+
+  .diagnosis-content {
+    @apply text-lg text-foreground leading-relaxed;
+  }
+
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }
