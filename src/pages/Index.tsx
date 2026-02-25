@@ -86,7 +86,7 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const compressImage = (file: File, maxWidth = 512, quality = 0.5): Promise<string> => {
+  const compressImage = (file: File, maxWidth = 384, quality = 0.45): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -138,16 +138,51 @@ const Index = () => {
         imageMimeType = parts[0].split(";")[0].split(":")[1];
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke("crop-diagnosis", {
-        body: {
-          description: description || (cropCategory ? `Issue with ${cropCategory} crop` : "Crop issue"),
-          district,
-          cropCategory,
-          language,
-          imageBase64,
-          imageMimeType,
-        },
-      });
+      const baseBody = {
+        description: description || (cropCategory ? `Issue with ${cropCategory} crop` : "Crop issue"),
+        district,
+        cropCategory,
+        language,
+      };
+
+      let data: any = null;
+      let fnError: any = null;
+
+      try {
+        const response = await supabase.functions.invoke("crop-diagnosis", {
+          body: {
+            ...baseBody,
+            imageBase64,
+            imageMimeType,
+          },
+        });
+
+        data = response.data;
+        fnError = response.error;
+      } catch (invokeErr) {
+        const invokeMessage = invokeErr instanceof Error ? invokeErr.message : "";
+
+        if (imageBase64 && invokeMessage.includes("Failed to send a request to the Edge Function")) {
+          const retryResponse = await supabase.functions.invoke("crop-diagnosis", {
+            body: {
+              ...baseBody,
+              imageBase64: null,
+              imageMimeType: null,
+            },
+          });
+
+          data = retryResponse.data;
+          fnError = retryResponse.error;
+
+          if (!retryResponse.error) {
+            setError(language === "en"
+              ? "Image was too large for upload. Diagnosis was completed using your text details."
+              : "ചിത്രം അപ്‌ലോഡ് ചെയ്യാൻ വളരെ വലുതായിരുന്നു. നിങ്ങളുടെ ടെക്സ്റ്റ് വിവരങ്ങൾ ഉപയോഗിച്ച് നിർണയം പൂർത്തിയാക്കി.");
+          }
+        } else {
+          throw invokeErr;
+        }
+      }
 
       if (fnError) {
         throw new Error(fnError.message);
