@@ -86,7 +86,7 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<string> => {
+  const compressImage = (file: File, maxWidth = 512, quality = 0.5): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -140,7 +140,7 @@ const Index = () => {
 
       const { data, error: fnError } = await supabase.functions.invoke("crop-diagnosis", {
         body: {
-          description,
+          description: description || (cropCategory ? `Issue with ${cropCategory} crop` : "Crop issue"),
           district,
           cropCategory,
           language,
